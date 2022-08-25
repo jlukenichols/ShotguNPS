@@ -1,1 +1,4 @@
 # Ignored files and folders
+CustomConfig.ps1
+logs/*.*
+cfg/*.*

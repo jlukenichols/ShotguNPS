@@ -17,15 +17,14 @@
 Clear-Host
 
 ### Dot-source functions ###
-. "C:\Scripts\includes\Write-Log.ps1"
-. "C:\Scripts\includes\Delete-OldFiles.ps1"
+. "..\Write-Log\Write-Log.ps1" #Relies on https://github.com/jlukenichols/Write-Log
+. "..\Write-Log\Delete-OldFiles.ps1" #Relies on https://github.com/jlukenichols/Write-Log
 
 ### Define variables ###
 
-$PathToScriptParentFolder = "C:\Scripts\NPSConfig"
-
-#Get the current date
-[DateTime]$currentDate=Get-Date
+#Get the current date and write it to a variable
+#[DateTime]$currentDate=Get-Date #Local timezone
+[DateTime]$currentDate = (Get-Date).ToUniversalTime() #UTC
 
 #Grab the individual portions of the date and put them in vars
 $currentYear = $($currentDate.Year)
@@ -36,21 +35,20 @@ $currentHour = $($currentDate.Hour).ToString("00")
 $currentMinute = $($currentDate.Minute).ToString("00")
 $currentSecond = $($currentDate.Second).ToString("00")
 
-$LogFilePath = "$PathToScriptParentFolder\logs\$($env:computername)_Export_$($currentYear)-$($currentMonth)-$($currentDay)T$($currentHour)$($currentMinute)$($currentSecond).txt"
-#Write-Host "`$LogFilePath: $LogFilePath"
+#Dot-source config file(s)
+. ".\DefaultConfig.ps1"
+if (Test-Path ".\CustomConfig.ps1") {
+    . ".\CustomConfig.ps1"
+}
 
-#Write the computer name to a variable
-$ComputerName = $env:COMPUTERNAME
+$LogFilePath = "$PSScriptRoot\logs\$($env:computername)_Export_$($currentYear)-$($currentMonth)-$($currentDay)T$($currentHour)$($currentMinute)$($currentSecond)$($loggingTimeZone).txt"
 
 ### Open log file ###
 Write-Log -LogString "Opening log file" -LogFilePath $LogFilePath
-
-#Array of all NPS servers
-[System.Collections.ArrayList]$ArrayOfNPSServers = "NPS2016-01","NPS2016-02"
 Write-Log -LogString "`$ArrayOfNPSServers: $ArrayOfNPSServers" -LogFilePath $LogFilePath
 
 ### Script main body ###
-$ExportFileName = "$PathToScriptParentFolder\cfg\$($env:computername)_$($currentYear)-$($currentMonth)-$($currentDay)T$($currentHour)$($currentMinute)$($currentSecond).xml"
+#$ExportFileName = "$PSScriptRoot\cfg\$($env:computername)_$($currentYear)-$($currentMonth)-$($currentDay)T$($currentHour)$($currentMinute)$($currentSecond).xml"
 #Export config
 netsh nps export filename = "$ExportFileName" exportPSK = YES
 Write-Log -LogString "Exported config to $ExportFileName" -LogFilePath $LogFilePath
@@ -58,7 +56,7 @@ Write-Log -LogString "Exported config to $ExportFileName" -LogFilePath $LogFileP
 <#
 foreach ($Server in $ArrayOfNPSServers) {
     #Make sure $Server is not the server we are running this on
-    if ($Server -ne $ComputerName) {
+    if ($Server -ne $env:COMPUTERNAME) {
         $LogString = "Importing config on server $Server"
         Write-Log -LogString $LogString -LogFilePath $LogFilePath
         Write-Host $LogString
@@ -70,7 +68,7 @@ foreach ($Server in $ArrayOfNPSServers) {
 Write-Log -LogString "Close log file." -LogFilePath $LogFilePath -LogRotateDays 30
 
 #Delete old NPS config files
-Delete-OldFiles -NumberOfDays 365 -PathToFiles $PathToScriptParentFolder -FileTypeExtension "xml"
+Delete-OldFiles -NumberOfDays 365 -PathToFiles $PSScriptRoot -FileTypeExtension "xml"
 
 ### End of script main body ###
 break
