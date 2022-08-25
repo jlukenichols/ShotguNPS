@@ -1,4 +1,4 @@
-﻿### This script is no longer used. Everything is done from the Export-NPSConfig.ps1 script. This is only included for posterity, you don't need it.
+﻿### This script is no longer used. Everything is done from the Export-NPSConfig.ps1 script. This is only included for posterity, you don't need it. ###
 
 <#
 .SYNOPSIS
