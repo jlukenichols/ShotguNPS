@@ -8,7 +8,7 @@
 
 .NOTES
     Release Date: 2019-12-19T10:09
-    Last Updated: 2022-08-25T16:24
+    Last Updated: 2022-09-06T09:55
    
     Author: Luke Nichols
 #>
@@ -16,9 +16,12 @@
 #In order to make debugging in PowerShell ISE easier, clear the screen at the start of the script
 Clear-Host
 
+#Change the working directory to $PSScriptRoot
+Set-Location $PSScriptRoot
+
 ### Dot-source functions ###
-. "..\Write-Log\Write-Log.ps1" #Relies on https://github.com/jlukenichols/Write-Log
-. "..\Write-Log\Delete-OldFiles.ps1" #Relies on https://github.com/jlukenichols/Write-Log
+. "$PSScriptRoot\..\Write-Log\Write-Log.ps1" #Relies on https://github.com/jlukenichols/Write-Log
+. "$PSScriptRoot\..\Write-Log\Delete-OldFiles.ps1" #Relies on https://github.com/jlukenichols/Write-Log
 
 ### Define variables ###
 
@@ -36,9 +39,9 @@ $currentMinute = $($currentDate.Minute).ToString("00")
 $currentSecond = $($currentDate.Second).ToString("00")
 
 #Dot-source config file(s)
-. ".\DefaultConfig.ps1"
-if (Test-Path ".\CustomConfig.ps1") {
-    . ".\CustomConfig.ps1"
+. "$PSScriptRoot\DefaultConfig.ps1"
+if (Test-Path "$PSScriptRoot\CustomConfig.ps1") {
+    . "$PSScriptRoot\CustomConfig.ps1"
 }
 
 #Grab the name of the parent folder for "logs"
@@ -73,7 +76,7 @@ Write-Log -LogString "Exported config to $ExportFileName" -LogFilePath $LogFileP
 #Loop through each server in the array
 foreach ($Server in $ArrayOfNPSServers) {
     #Make sure $Server is not the server we are running this on
-    if ($Server -ne $env:COMPUTERNAME) {
+    if ($Server -notlike "$env:COMPUTERNAME*") {
         $LogString = "Importing config on server $Server"
         Write-Log -LogString $LogString -LogFilePath $LogFilePath
         Write-Host $LogString
@@ -90,7 +93,7 @@ if ($DeleteConfigFileAfterReplication -eq $true) {
 Write-Log -LogString "Close log file." -LogFilePath $LogFilePath -LogRotateDays $LogRotateDays
 
 #Delete old NPS config files
-Delete-OldFiles -NumberOfDays $ConfigFileRotateDays -PathToFiles $PSScriptRoot -FileTypeExtension "xml"
+Delete-OldFiles -NumberOfDays $ConfigFileRotateDays -PathToFiles $ExportFileParentPath -FileTypeExtension "xml"
 
 ### End of script main body ###
 break

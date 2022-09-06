@@ -2,3 +2,4 @@
 CustomConfig.ps1
 logs/*.*
 cfg/*.*
+Import-NPSConfig.ps1
